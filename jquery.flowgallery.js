@@ -1,9 +1,10 @@
 /*!
  * jQuery flowgallery plugin: Cover Flow Image Gallery
+ * Forked from https://github.com/bozz/flowgallery
  * Examples and documentation at: http://flowgallery.org
- * Version: 0.7.0 (08-JAN-2013)
- * Author: Boris Searles (boris@lucidgardens.com)
- * Requires jQuery v1.4 or later
+ * Version: 0.8.0 (10-DEC-2013)
+ * Author: Simon Tam
+ * Requires jQuery v1.7 or later
  * Licensed under the MIT license:
  * http://www.opensource.org/licenses/mit-license.php
  */
@@ -69,6 +70,7 @@
         overflow: 'hidden',
         marginLeft: '0',
         paddingLeft: '0',
+        paddingBottom: '20px',
         position: 'relative',
         width: '100%'
       });
@@ -80,27 +82,30 @@
 
     // initialize caption - a single instance is shared by all images
     function initCaption() {
-      var captionElem = document.createElement('p');
-      $caption = $(captionElem).addClass('fg-caption').css({
-        backgroundColor: options.backgroundColor,
-        display: 'none',
-        marginTop: '0',
-        padding: '8px ' + (options.imagePadding+10) + 'px 15px',
-        position: 'absolute'
+      $caption = $('<p>', {
+        'class': 'fg-caption',
+        css: {          
+          backgroundColor: options.backgroundColor,
+          display: 'none',
+          marginTop: '0',
+          padding: '8px ' + (options.imagePadding+10) + 'px 15px',
+          position: 'absolute'
+        }
       });
     };
 
 
     // initialize wrapper around gallery - used for positioning caption
     function initWrapper() {
-      var wrapperElem = document.createElement('div');
-      $(wrapperElem)
-      .addClass('fg-wrapper').css({
-        position: 'relative'
+      var $wrapperElem = $('<div>', {
+        'class': 'fg-wrapper',
+        css: {
+          position: 'relative'
+        }
       })
       .append( $list.get(0) )
       .append( $caption.get(0) );
-      $container.append(wrapperElem);
+      $container.append($wrapperElem);
     };
 
 
@@ -237,7 +242,14 @@
         }
 
         if(animate) {
-          $listItem.stop().animate(config, { duration: options.duration, easing: options.easing, complete: completeFn });
+          $listItem.stop().animate(config, {
+            duration: options.duration,
+            easing: options.easing,
+            complete: completeFn,
+            step: function () {
+              $listItem.css('overflow', 'visible');
+            }
+          });
         } else {
           $listItem.css(config);
           if(completeFn) { completeFn(); }
@@ -293,7 +305,7 @@
         i = 0;
 
       if (isBefore) {
-        left -= flowItems[activeIndex].w*0.5;
+        left -= flowItems[activeIndex].w * 0.5;
         left -= options.imagePadding;
         left -= (activeIndex - current) * 10;
         left -= (activeIndex - current) * 2 * options.thumbPadding;
@@ -301,7 +313,7 @@
           left -= flowItems[i].tw;
         }
       } else {
-        left += flowItems[activeIndex].w*0.5;
+        left += flowItems[activeIndex].w * 0.5;
         left += options.imagePadding;
         left += (current - activeIndex) * 10;
         left += (current - activeIndex) * 2 * options.thumbPadding;
@@ -335,7 +347,7 @@
 
         $caption.css({
           left: centerX - options.imagePadding - activeItem.w * 0.5,
-          top: activeItem.h + options.imagePadding*2,
+          top: activeItem.h + options.imagePadding * 2,
           width: activeItem.w - 20
         });
 
@@ -364,9 +376,9 @@
 
     // handle key events
     function handleKeyEvents(e) {
-      if(e.keyCode===37) { // right arrow key
+      if(e.keyCode === 37) { // right arrow key
         flowInDir(-1);
-      } else if(e.keyCode===39) { // left arrow key
+      } else if(e.keyCode === 39) { // left arrow key
         flowInDir(1);
       }
     };
@@ -424,24 +436,25 @@
 
   // default option values
   FlowGallery.defaults = {
-    activeIndex: 0,          // index of image that is initially active
+    activeIndex: 0,               // index of image that is initially active
     animate: true,
     backgroundColor: 'black',
     circular: false,
-    duration: 900,            // animation duration (higher value = slower speed)
+    duration: 900,                // animation duration (higher value = slower speed)
     easing: 'linear',
-    enableKeyNavigation: true,   // enables forward/backward arrow keys for next/previous navigation
+    enableKeyNavigation: true,    // enables forward/backward arrow keys for next/previous navigation
     forceHeight: false,
     forceWidth: false,
-    forwardOnActiveClick: true, // should clicking on active image, show next image?
-    imagePadding: 0,         // border of active image
-    loadingClass: "loading", // css class applied to <li> elements of loading images
-    loadingHeight: 60,       // loading height to use if cannot be determined
-    loadingWidth: 100,       // loading width to use if cannot be determined
+    forwardOnActiveClick: true,   // should clicking on active image, show next image?
+    imagePadding: 0,              // border of active image
+    loadingClass: "loading",      // css class applied to <li> elements of loading images
+    loadingHeight: 60,            // loading height to use if cannot be determined
+    loadingWidth: 100,            // loading width to use if cannot be determined
     thumbHeight: 'auto',
-    thumbPadding: 0,         // border of thumbnails
-    thumbTopOffset: 'auto',  // top offset in pixels or 'auto' for centering images within list height
-    thumbWidth: 'auto'
+    thumbPadding: 0,              // border of thumbnails
+    thumbTopOffset: 'auto',       // top offset in pixels or 'auto' for centering images within list height
+    thumbWidth: 'auto',
+    imageAspectRatio: false       // keeps the images in aspect ratio to original
   };
 
 
@@ -485,7 +498,7 @@
       }
 
       // remove image and add 'loading' class
-      $img.hide().parent().addClass(options.loadingClass).css({
+      $img.hide().parent('li').addClass(options.loadingClass).css({
         height: self.th,
         width: self.tw
       });
@@ -514,8 +527,8 @@
       if(img.complete) {
         initListItem();
       } else {
-        $img.bind('load readystatechange', imageLoadHandler)
-        .bind('error', function () {
+        $img.on('load readystatechange', imageLoadHandler)
+        .on('error', function () {
           $img.css('visibility', 'visible').parent().removeClass(options.loadingClass);
         });
       }
@@ -533,7 +546,7 @@
 
     // load handler for images
     function initListItem(){
-      $img.css('visibility', 'visible').parent().removeClass(options.loadingClass);
+      $img.css('visibility', 'visible').parent('li').removeClass(options.loadingClass);
       $img.fadeIn();
 
       self.isLoaded = true;
@@ -547,10 +560,28 @@
     function initImageDimensions() {
       var img = $img.get(0);
 
-      // update full image dimensions
       if(typeof img.naturalWidth !== 'undefined') {
-        self.w  = options.forceWidth || img.naturalWidth || img.width;
-        self.h = options.forceHeight || img.naturalHeight || img.height;
+
+        // update full image dimensions with aspect ratio
+        if(options.imageAspectRatio) {
+          if(options.forceWidth && options.forceHeight) {
+            self.w = options.forceWidth;
+            self.h = options.forceHeight;
+          } else if (options.forceWidth) {
+            self.w = options.forceWidth;
+            self.h = options.forceWidth / img.naturalWidth * img.naturalHeight;
+          } else if (options.forceHeight) {
+            self.w = options.forceHeight / img.naturalHeight * img.naturalWidth;
+            self.h = options.forceHeight;
+          } else {
+            self.w = img.naturalWidth || img.width;
+            self.h = img.naturalHeight || img.height;
+          }
+        } else {
+          // ignore aspect ratio
+          self.w  = options.forceWidth || img.naturalWidth || img.width;
+          self.h = options.forceHeight || img.naturalHeight || img.height;
+        }
       } else {
         var tmpImg = new Image();
         tmpImg.src = $img.attr('src');
