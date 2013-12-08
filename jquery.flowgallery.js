@@ -1,10 +1,9 @@
 /*!
  * jQuery flowgallery plugin: Cover Flow Image Gallery
- * Forked from https://github.com/bozz/flowgallery
  * Examples and documentation at: http://flowgallery.org
- * Version: 0.8.0 (10-DEC-2013)
+ * Version: 0.7.0 (08-JAN-2013)
  * Author: Boris Searles (boris@lucidgardens.com)
- * Requires jQuery v1.7 or later
+ * Requires jQuery v1.4 or later
  * Licensed under the MIT license:
  * http://www.opensource.org/licenses/mit-license.php
  */
@@ -70,7 +69,7 @@
         overflow: 'hidden',
         marginLeft: '0',
         paddingLeft: '0',
-        paddingBottom: '20px',
+        paddingBottom: '30px',
         position: 'relative',
         width: '100%'
       });
@@ -146,10 +145,14 @@
       if(!self.activeLoaded && item.index === options.activeIndex) {
         self.activeLoaded = true;
         clearTimeout(updateFlowTimer);
-        updateFlowTimer = setTimeout(updateFlow.call(null, options.animateImageLoad), 100);
+        updateFlowTimer = setTimeout(function () {
+          updateFlow(options.animateImageLoad);
+        }, 100);
       } else if(self.activeLoaded && (item.th !== options.loadingHeight || item.tw !== options.loadingWidth)) {
         clearTimeout(updateFlowTimer);
-        updateFlowTimer = setTimeout(updateFlow.call(null, options.animateImageLoad), 100);
+        updateFlowTimer = setTimeout(function () {
+          updateFlow(options.animateImageLoad);
+        }, 100);
       }
     };
 
@@ -469,7 +472,9 @@
 
       // inserting into flowItems array
       Array.prototype.splice.apply(flowItems, [index, 0].concat(newFlowItems));
-      
+
+      updateFlow(options.animateImageLoad);
+
       // appending to dom
       if(index > 0) {
         $list.children('li:nth-child(' + index + ')').after(items);
